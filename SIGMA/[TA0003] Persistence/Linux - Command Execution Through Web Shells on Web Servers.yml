@@ -1,0 +1,37 @@
+title: 'Linux - Command Execution Through Web Shells on Web Servers'
+id: 6b269379-fdbb-4b33-9b35-1d6972453ba0
+status: stable
+description: 'Detects the execution of commands through a Web Shell on Linux Servers'
+references: 
+    - 'https://attack.mitre.org/techniques/T1505/003/'
+author: Bryenne Soares
+date: 02/07/2024
+tags:
+    - attack.persistence.TA0003
+    - attack.T1505.003 # Server Software Component: Web Shell
+logsource:
+    category: process_creation
+    product: Linux
+    definition: auditd
+detection:
+    Process_Name:
+      process_name|endswith:
+      - 'ls'
+      - 'whoami'
+      - 'id'
+      - 'cat'
+    Cmd_Exec:  
+        type: 'SYSCALL'  
+        syscall: 'execve'  
+        key|contains: 
+        - 'detect_execve_www'
+        - 'command_exec'
+    condition: Process_Name AND Cmd_Exec
+fields:
+    - 'process_name'
+    - 'Cmd_Exec'
+    - 'syscall'
+    - 'key'
+falsepositives:
+    - "É necessário validar se foi realizado uma ação administrativa de conhecimento da equipe de infraestrutura"
+level: high

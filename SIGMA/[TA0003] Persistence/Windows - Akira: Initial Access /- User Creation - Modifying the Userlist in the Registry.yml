@@ -1,0 +1,48 @@
+title: 'Windows - Akira: Initial Access / User Creation / Modifying the Userlist in the Registry'
+id: 240a8928-d4bb-467e-afc8-ac9a09be1b41
+status: stable
+description: 'Detects malicious login, account creation, and Userlist modification to hide users'
+references: 
+    - 'https://attack.mitre.org/techniques/T1078/'
+    - 'https://attack.mitre.org/techniques/T1136/002/'
+author: Bryenne Soares
+date: 14/11/2024
+tags:
+    - attack.initial access.TA0001
+    - attack.T1078 # Valid Accounts
+    - attack.persistence.TA0003
+    - attack.T1543.002 # Create Account: Domain Account
+    - attack.privilege_escalation
+logsource:
+    category: security
+    product: windows
+    definition: sysmon
+detection:
+    selection_logon|contains:
+      EventID:
+      - 4624  # Successful logon
+      - 4625  # Failed logon
+    selection_user_creation:
+      EventID:
+      - 4720  # User account creation
+      - 4722  # User account enabled
+      - 4732  # User added to security-enabled global group
+    selection_registry_modification|contains:
+      EventID:
+      - 4657 # Um valor do registro foi modificado.
+      winlog.event_data.ObjectName:
+      - '\REGISTRY\MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\Userlist'
+    selection_process_creation|contains:
+      EventID:
+      - 4688 # Um processo foi criado.
+      process.name:
+      - 'reg.exe'
+    condition: selection_logon or selection_user_creation or (selection_registry_modification or selection_process_creation)      
+fields:
+    - 'EventId'
+    - 'process.name'
+    - 'user.name'
+    - 'registry.key'
+falsepositives:
+    - "É necessário validar se foi realizado uma ação administrativa de conhecimento da equipe de infraestrutura"
+level: high

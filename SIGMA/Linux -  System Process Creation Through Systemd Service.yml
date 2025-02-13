@@ -1,0 +1,42 @@
+title: 'Linux - System Process Creation Through Systemd Service'
+id: 938732d4-b880-4498-ab19-232ccc5797a0
+status: stable
+description: 'Detecta a criação de processos do sistema utilizando o Systemd Service'
+references: 
+    - 'https://attack.mitre.org/techniques/T1543/002/'
+author: Bryenne Soares
+date: 06/09/2024
+tags:
+    - attack.persistence.TA0003
+    - attack.T1543.002 # Create or Modify System Process: Systemd Service
+logsource:
+    category: process_creation
+    product: Linux
+    definition: auditd and SysmonForLinux
+detection:
+    Process_Creation:
+      EventID:
+        - 11
+      TargetFilename|contains:
+        - '/etc/systemd/system/*.service'
+    selection1|contains:
+    - 'auditd.log.name: "/etc/systemd/system/*.service"'
+      'auditd.log.nametype: "CREATE"'
+    selection2|contains:
+    - 'auditd.summary.object.primary: "/etc/systemd/system/*.service"'
+      'file.path: "/etc/systemd/system/*.service"'
+    selection3|contains|or:
+    - 'process.title: "*nano /etc/systemd/system/*.service*"'
+    - 'file.path: "/etc/systemd/system/*.service"'
+    - 'process.title: "*sudo systemctl enable /etc/systemd/system/*.service*"'
+    condition: selection1 or selection2 or selection3
+fields:
+    - 'process.name'
+    - 'process.title'
+    - 'file.path'
+    - 'auditd.log.name'
+    - 'auditd.log.nametype'
+    - 'auditd.summary.object.primary'
+falsepositives:
+    - "É necessário validar se foi realizado uma ação administrativa de conhecimento da equipe de infraestrutura"
+level: high
